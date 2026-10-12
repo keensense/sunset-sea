@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>sunset-sea — a physically based sunset over the sea</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { height: 100%; margin: 0; background: #0b0a10; overflow: hidden; }
+      canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+      #panel {
+        position: fixed; right: 12px; top: 12px; width: 240px; max-height: calc(100% - 24px); overflow: auto;
+        padding: 12px 14px; border-radius: 12px; background: rgba(12, 10, 18, 0.62); backdrop-filter: blur(8px);
+        color: #e9e4ee; font: 12px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      #panel h1 { margin: 0 0 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+      #panel label { display: block; margin-top: 8px; }
+      #panel label span { display: flex; justify-content: space-between; opacity: 0.8; }
+      #panel input[type='range'] { width: 100%; }
+      #panel .row { display: flex; gap: 8px; margin-top: 10px; }
+      #panel button { flex: 1; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: none; color: inherit; font: inherit; cursor: pointer; }
+      #panel button:hover { background: rgba(255,255,255,0.08); }
+      #panel .hint { margin-top: 8px; opacity: 0.55; }
+      body.hide #panel { display: none; }
+      #nogl { display: none; position: fixed; inset: 0; place-items: center; color: #e9e4ee; font: 16px system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div id="nogl">This browser cannot run WebGL.</div>
+    <div id="panel">
+      <h1>sunset-sea</h1>
+      <div id="sliders"></div>
+      <div class="row">
+        <button id="coast" type="button">Coast: on</button>
+        <button id="pause" type="button">Pause</button>
+      </div>
+      <div class="row"><button id="copy" type="button">Copy settings</button></div>
+      <div class="hint">Press H to hide this panel.</div>
+    </div>
+    <script type="module">
+      import { Sunset } from './src/sunset.js';
+
+      if (!Sunset.isSupported()) {
+        document.getElementById('nogl').style.display = 'grid';
+        document.getElementById('panel').style.display = 'none';
+      } else {
+        const params = new URLSearchParams(location.search);
+        const start = {};
+        for (const [k, v] of params) start[k] = v === 'true' ? true : v === 'false' ? false : isNaN(+v) ? v : +v;
+        const sunset = new Sunset(document.getElementById('c'), start);
+        window.sunset = sunset;
+
+        const defs = [
+          ['elevation', 'Sun height (°)', -5, 25, 0.1],
+          ['azimuth', 'Sun direction (°)', -40, 40, 1],
+          ['drift', 'Drift (°)', 0, 3, 0.05],
+          ['wind', 'Wind (m/s)', 0, 14, 0.1],
+          ['turbidity', 'Haze', 0.3, 4, 0.05],
+          ['clouds', 'Clouds', 0, 1, 0.01],
+          ['exposure', 'Exposure', 0.1, 1.2, 0.01],
+          ['glitter', 'Glitter', 0, 3, 0.05],
+          ['horizon', 'Horizon height', 0.15, 0.85, 0.01],
+          ['fov', 'Field of view (°)', 30, 110, 1],
+        ];
+        const box = document.getElementById('sliders');
+        for (const [key, label, min, max, step] of defs) {
+          const l = document.createElement('label');
+          const head = document.createElement('span');
+          const name = document.createElement('b'); name.textContent = label; name.style.fontWeight = 400;
+          const val = document.createElement('em'); val.style.fontStyle = 'normal';
+          head.append(name, val);
+          const input = document.createElement('input');
+          input.type = 'range'; input.min = min; input.max = max; input.step = step; input.value = sunset.options[key];
+          const show = () => (val.textContent = (+input.value).toFixed(step < 0.1 ? 2 : 1));
+          show();
+          input.addEventListener('input', () => { sunset.setOptions({ [key]: +input.value }); show(); });
+          l.append(head, input);
+          box.append(l);
+        }
+        const coast = document.getElementById('coast');
+        coast.textContent = 'Coast: ' + (sunset.options.coast ? 'on' : 'off');
+        coast.onclick = () => { sunset.setOptions({ coast: !sunset.options.coast }); coast.textContent = 'Coast: ' + (sunset.options.coast ? 'on' : 'off'); };
+        const pause = document.getElementById('pause');
+        pause.onclick = () => { if (sunset.running) { sunset.stop(); pause.textContent = 'Play'; } else { sunset.start(); pause.textContent = 'Pause'; } };
+        document.getElementById('copy').onclick = async (e) => {
+          const text = JSON.stringify(sunset.options, null, 2);
+          try { await navigator.clipboard.writeText(text); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy failed'; }
+          setTimeout(() => (e.target.textContent = 'Copy settings'), 1400);
+        };
+        addEventListener('keydown', (e) => { if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('hide'); });
+        if (params.has('hide')) document.body.classList.add('hide');
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "name": "sunset-sea",
+  "version": "0.1.0",
+  "description": "A physically based sunset over the sea in one WebGL fragment shader. No dependencies.",
+  "type": "module",
+  "main": "./src/sunset.js",
+  "module": "./src/sunset.js",
+  "types": "./src/sunset.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/sunset.d.ts",
+      "default": "./src/sunset.js"
+    }
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "webgl",
+    "shader",
+    "glsl",
+    "sunset",
+    "sea",
+    "ocean",
+    "sky",
+    "atmosphere",
+    "ambient",
+    "background"
+  ],
+  "license": "MIT",
+  "author": "keensense (https://keensense.net)",
+  "homepage": "https://keensense.github.io/sunset-sea/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keensense/sunset-sea.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keensense/sunset-sea/issues"
+  }
+}
